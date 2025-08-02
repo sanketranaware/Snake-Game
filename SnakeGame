@@ -1,0 +1,208 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+
+public class SnakeGame extends JPanel implements ActionListener {
+    private final int width;
+    private final int height;
+    private final int cellSize;
+    private final Random random = new Random();
+    private static final int FRAME_RATE = 20;
+    private boolean gameStarted = false;
+    private boolean gameOver = false;
+    private int highScore;
+    private GamePoint food;
+    private Direction direction;
+    private Direction newDirection;
+    private final List<GamePoint> snake;
+
+    public SnakeGame(int width, int height) {
+        this.direction = SnakeGame.Direction.RIGHT;
+        this.newDirection = SnakeGame.Direction.RIGHT;
+        this.snake = new ArrayList();
+        this.width = width;
+        this.height = height;
+        this.cellSize = width / 40;
+        this.setPreferredSize(new Dimension(width, height));
+        this.setBackground(Color.BLACK);
+    }
+
+    public void startGame() {
+        this.resetGameData();
+        this.setFocusable(true);
+        this.setFocusTraversalKeysEnabled(false);
+        this.requestFocusInWindow();
+        this.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                SnakeGame.this.handleKeyEvent(e.getKeyCode());
+            }
+        });
+        (new Timer(50, this)).start();
+    }
+
+    private void handleKeyEvent(int keyCode) {
+        if (!this.gameStarted) {
+            if (keyCode == 32) {
+                this.gameStarted = true;
+            }
+        } else if (!this.gameOver) {
+            switch (keyCode) {
+                case 37:
+                    if (this.direction != SnakeGame.Direction.RIGHT) {
+                        this.newDirection = SnakeGame.Direction.LEFT;
+                    }
+                    break;
+                case 38:
+                    if (this.direction != SnakeGame.Direction.DOWN) {
+                        this.newDirection = SnakeGame.Direction.UP;
+                    }
+                    break;
+                case 39:
+                    if (this.direction != SnakeGame.Direction.LEFT) {
+                        this.newDirection = SnakeGame.Direction.RIGHT;
+                    }
+                    break;
+                case 40:
+                    if (this.direction != SnakeGame.Direction.UP) {
+                        this.newDirection = SnakeGame.Direction.DOWN;
+                    }
+            }
+        } else if (keyCode == 32) {
+            this.gameStarted = false;
+            this.gameOver = false;
+            this.resetGameData();
+        }
+
+    }
+
+    private void resetGameData() {
+        this.snake.clear();
+        this.snake.add(new GamePoint(this.width / 2, this.height / 2));
+        this.generateFood();
+    }
+
+    private void generateFood() {
+        do {
+            this.food = new GamePoint(this.random.nextInt(this.width / this.cellSize) * this.cellSize, this.random.nextInt(this.height / this.cellSize) * this.cellSize);
+        } while(this.snake.contains(this.food));
+
+    }
+
+    protected void paintComponent(Graphics graphics) {
+        super.paintComponent(graphics);
+        if (!this.gameStarted) {
+            this.printMessage(graphics, "Press Space Bar to Begin Game");
+        } else {
+            graphics.setColor(Color.cyan);
+            graphics.fillRect(this.food.x, this.food.y, this.cellSize, this.cellSize);
+            Color snakeColor = Color.GREEN;
+
+            for(GamePoint point : this.snake) {
+                graphics.setColor(snakeColor);
+                graphics.fillRect(point.x, point.y, this.cellSize, this.cellSize);
+                int newGreen = (int)Math.round((double)snakeColor.getGreen() * 0.95);
+                snakeColor = new Color(0, newGreen, 0);
+            }
+
+            if (this.gameOver) {
+                int currentScore = this.snake.size();
+                if (currentScore > this.highScore) {
+                    this.highScore = currentScore;
+                }
+
+                this.printMessage(graphics, "Your Score: " + currentScore + "\nHigh Score: " + this.highScore + "\nPress Space Bar to Reset");
+            }
+        }
+
+    }
+
+    private void printMessage(Graphics graphics, String message) {
+        graphics.setColor(Color.WHITE);
+        graphics.setFont(graphics.getFont().deriveFont(30.0F));
+        int currentHeight = this.height / 3;
+        Graphics2D graphics2D = (Graphics2D)graphics;
+        FontRenderContext frc = graphics2D.getFontRenderContext();
+
+        for(String line : message.split("\n")) {
+            TextLayout layout = new TextLayout(line, graphics.getFont(), frc);
+            Rectangle2D bounds = layout.getBounds();
+            float targetWidth = (float)((double)this.width - bounds.getWidth()) / 2.0F;
+            layout.draw(graphics2D, targetWidth, (float)currentHeight);
+            currentHeight += graphics.getFontMetrics().getHeight();
+        }
+
+    }
+
+    private void move() {
+        this.direction = this.newDirection;
+        GamePoint head = (GamePoint)this.snake.getFirst();
+        GamePoint var10000;
+        switch (this.direction.ordinal()) {
+            case 0 -> var10000 = new GamePoint(head.x, head.y - this.cellSize);
+            case 1 -> var10000 = new GamePoint(head.x, head.y + this.cellSize);
+            case 2 -> var10000 = new GamePoint(head.x + this.cellSize, head.y);
+            case 3 -> var10000 = new GamePoint(head.x - this.cellSize, head.y);
+            default -> throw new MatchException((String)null, (Throwable)null);
+        }
+
+        GamePoint newHead = var10000;
+        this.snake.addFirst(newHead);
+        if (newHead.equals(this.food)) {
+            this.generateFood();
+        } else if (this.isCollision()) {
+            this.gameOver = true;
+            this.snake.removeFirst();
+        } else {
+            this.snake.removeLast();
+        }
+
+    }
+
+    private boolean isCollision() {
+        GamePoint head = (GamePoint)this.snake.getFirst();
+        boolean invalidWidth = head.x < 0 || head.x >= this.width;
+        boolean invalidHeight = head.y < 0 || head.y >= this.height;
+        if (!invalidWidth && !invalidHeight) {
+            return this.snake.size() != (new HashSet(this.snake)).size();
+        } else {
+            return true;
+        }
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        if (this.gameStarted && !this.gameOver) {
+            this.move();
+        }
+
+        this.repaint();
+    }
+
+    private static record GamePoint(int x, int y) {
+    }
+
+    private static enum Direction {
+        UP,
+        DOWN,
+        RIGHT,
+        LEFT;
+    }
+}
