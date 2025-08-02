@@ -1,0 +1,25 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
+import java.awt.Component;
+import javax.swing.JFrame;
+
+public class Main {
+    private static final int WIDTH = 800;
+    private static final int HEIGHT = 600;
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Snake Game");
+        frame.setSize(800, 600);
+        SnakeGame game = new SnakeGame(800, 600);
+        frame.add(game);
+        frame.setLocationRelativeTo((Component)null);
+        frame.setDefaultCloseOperation(3);
+        frame.setResizable(false);
+        frame.setVisible(true);
+        frame.pack();
+        game.startGame();
+    }
+}
